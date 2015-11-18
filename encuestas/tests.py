@@ -16,6 +16,10 @@ def create_question( question_text, days ):
     time = timezone.now() + datetime.timedelta( days = days )
     return Question.objects.create( question_text = question_text, pub_date = time)
 
+def create_choice( choice_text, votes, question ):
+    
+    return Choice.objects.create( choice_text = choice_text, vote = votes, question = question )
+
 #clases
 
 class QuestionMethodTest( TestCase ):
@@ -91,4 +95,3 @@ class QuestionDetallesTests( TestCase ):
         self.assertContains( respuesta, pregunta_pasada.question_text, status_code = 200 )
 
 class QuestionResultadosTest( TestCase ):
-    
