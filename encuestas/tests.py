@@ -3,7 +3,7 @@ from django.core.urlresolvers import reverse
 import datetime
 from django.utils import timezone
 
-from encuestas.models import Question
+from encuestas.models import Question, Choice
 
 # Create your tests here.
 
@@ -17,8 +17,8 @@ def create_question( question_text, days ):
     return Question.objects.create( question_text = question_text, pub_date = time)
 
 def create_choice( choice_text, votes, question ):
-    
-    return Choice.objects.create( choice_text = choice_text, vote = votes, question = question )
+    """ Creo una opcion y la asigno a la encuesta que se pasa por parametro """
+    return Choice.objects.create( question = question, choice_text = choice_text, vote = votes  )
 
 #clases
 
@@ -81,6 +81,27 @@ class QuestionIndexViewTest( TestCase ):
         respuesta = self.client.get( reverse( 'encuestas:index' ) )
         self.assertQuerysetEqual( respuesta.context[ 'ultimas_encuestas' ], [ '<Question: Pregunta pasada 2.>', '<Question: Pregunta pasada 1.>' ] )
 
+    def test_index_view_con_encuestas_sin_opciones( self ):
+        """ El index no deberia mostrar encuestas sin opciones """
+        create_question( question_text = "Pregunta", days = 0 )
+        pregunta = Question.objects.all()[0]
+        respuesta = self.client.get( reverse( 'encuestas:index' ) )
+        self.assertEqual( respuesta.status_code, 200 )
+        self.assertContains( respuesta, 'No hay encuestas disponibles.' )
+        self.assertQuerysetEqual( respuesta.context[ 'ultimas_encuestas' ], [] )
+
+    def test_index_view_una_encuesta_con_una_opcion( self ):
+        """ El index no deberia mostrar encuestas con una sola opción
+        sería redundante, no?
+        Sería así supongo """
+        create_question( question_text = "Pregunta", days = 0 )
+        pregunta = Question.objects.all()[0]
+        create_choice( choice_text = "Respuesta1", votes = 0, question = pregunta )
+        self.assertEqual( respuesta.status_code, 200 )
+        self.assertContains( respuesta, 'No hay encuestas disponibles.' )
+        self.assertQuerysetEqual( respuesta.context[ 'ultimas_encuestas' ], [] )
+
+
 class QuestionDetallesTests( TestCase ):
     def test_detalles_view_con_una_encuesta_futura( self ):
         """ El view detalles de una Pregunta futura debería devolver un 404. """
@@ -95,3 +116,4 @@ class QuestionDetallesTests( TestCase ):
         self.assertContains( respuesta, pregunta_pasada.question_text, status_code = 200 )
 
 class QuestionResultadosTest( TestCase ):
+    pass
