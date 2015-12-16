@@ -10,7 +10,7 @@ class Ingrediente( models.Model ):
 
 class Pizza( models.Model ):
     nombre = models.CharField( max_length = 150 )
-    precio = models.DecimalField ( decimal_places = 2 )
+    precio = models.DecimalField ( max_digits = 5, decimal_places = 2 )
     ingredientes = models.ManyToManyField( Ingrediente )
 
     def __str__(self):
