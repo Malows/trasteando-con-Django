@@ -84,7 +84,6 @@ class QuestionIndexViewTest( TestCase ):
     def test_index_view_con_encuestas_sin_opciones( self ):
         """ El index no deberia mostrar encuestas sin opciones """
         create_question( question_text = "Pregunta", days = 0 )
-        pregunta = Question.objects.all()[0]
         respuesta = self.client.get( reverse( 'encuestas:index' ) )
         self.assertEqual( respuesta.status_code, 200 )
         self.assertContains( respuesta, 'No hay encuestas disponibles.' )
@@ -92,15 +91,25 @@ class QuestionIndexViewTest( TestCase ):
 
     def test_index_view_una_encuesta_con_una_opcion( self ):
         """ El index no deberia mostrar encuestas con una sola opción
-        sería redundante, no?
-        Sería así supongo """
+        sería redundante, no? """
         create_question( question_text = "Pregunta", days = 0 )
-        pregunta = Question.objects.all()[0]
-        create_choice( choice_text = "Respuesta1", votes = 0, question = pregunta )
+        pregunta = Question.objects.get(pk=1)
+        pregunta.choice_set.create( choice_text = "Respuesta1", votes = 0 )
+        respuesta = self.client.get( reverse( 'encuestas:index' ) )
         self.assertEqual( respuesta.status_code, 200 )
         self.assertContains( respuesta, 'No hay encuestas disponibles.' )
         self.assertQuerysetEqual( respuesta.context[ 'ultimas_encuestas' ], [] )
 
+    def test_index_view_una_encuesta_con_dos_o_mas_opciones( self ):
+        """ El index deberia mostrar encuestas con dos o más opciones """
+        create_question( question_text = "Pregunta", days = 0 )
+        pregunta = Question.objects.get(pk=1)
+        pregunta.choice_set.create( choice_text = "Respuesta1", votes = 0 )
+        pregunta.choice_set.create( choice_text = "Respuesta2", votes = 0 )
+        respuesta = self.client.get( reverse( 'encuestas:index' ) )
+        self.assertEqual( pregunta.choice_set.count() >= 2, True )
+        self.assertEqual( respuesta.status_code, 200 )
+        self.assertQuerysetEqual( respuesta.context[ 'ultimas_encuestas' ], [ '<Question: Pregunta>' ] )
 
 class QuestionDetallesTests( TestCase ):
     def test_detalles_view_con_una_encuesta_futura( self ):
